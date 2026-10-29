@@ -1,0 +1,16 @@
+{
+  "name": "genshin-sha",
+  "version": "0.1.0",
+  "description": "原神杀 - 以三国杀玩法为基底、结合原神特性的可联机网页桌游",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/simulate.js && node test/client-test.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

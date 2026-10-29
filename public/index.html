@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>原神杀 · 联机桌游</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ================= 大厅入口 ================= -->
+<div id="screen-entry" class="screen">
+  <div class="entry-box">
+    <div class="game-logo">
+      <div class="logo-title">原神杀</div>
+      <div class="logo-sub">以三国杀玩法为基底 · 原神角色联机桌游</div>
+    </div>
+    <div class="entry-name">
+      <label>你的昵称</label>
+      <input id="input-name" maxlength="12" placeholder="输入昵称（默认：旅行者）">
+    </div>
+    <div class="entry-actions">
+      <button id="btn-create" class="btn btn-primary">创建房间</button>
+      <button id="btn-test-mode" class="btn" style="margin-top: 8px; background: #ff6b6b;">测试模式（单人调试）</button>
+      <div class="join-row">
+        <input id="input-code" maxlength="4" inputmode="numeric" placeholder="房间号">
+        <button id="btn-join" class="btn">加入房间</button>
+      </div>
+    </div>
+    <div class="entry-tips">
+      <p>· 房主建房后可在房间内点击「补位AI」单人试玩</p>
+      <p>· 手机与电脑共用同一地址即可互通联机</p>
+      <p>· 联机方式见项目 README（局域网 / 樱花映射 / RedMine VPN）</p>
+    </div>
+    <div style="text-align: center; margin-top: 12px;">
+      <button id="btn-settings-entry" class="btn btn-mini">设置</button>
+      <button id="btn-codex" class="btn btn-mini" style="margin-left: 8px;">图鉴</button>
+      <button id="btn-announcement" class="btn btn-mini" style="margin-left: 8px;">公告</button>
+      <button id="btn-fullscreen-entry" class="btn btn-mini" style="margin-left: 8px;">全屏</button>
+    </div>
+    <div style="position: absolute; bottom: 10px; left: 10px; font-size: 11px; opacity: 0.5; color: #ccc;">v0.1</div>
+    <div style="position: absolute; bottom: 10px; right: 10px; font-size: 15px; opacity: 0.5; color: #15ff00;">bilibili:莫末不是末莫</div>
+    <div id="toast-entry"></div>
+  </div>
+</div>
+
+<!-- ================= 公告弹窗 ================= -->
+<div id="announcement-modal" class="hidden">
+  <div id="announcement-box">
+    <div id="announcement-title-row">
+      <span id="announcement-title">游戏公告</span>
+    </div>
+    <div id="announcement-body" style="font-size: 14px; line-height: 1.7; color: var(--text);">
+      <p>欢迎来到原神杀！</p>
+      <p>· 这是一款以三国杀为基底，结合原神角色特色的联机桌游</p>
+      <p>· 当前版本：v0.1 测试版</p>
+      <p>· 更多功能持续开发中</p>
+      <p>· 如有建议可以私信莫末投稿OvO</p>
+      <p style="opacity: 0.6; font-size: 12px; margin-top: 16px;">b站莫末不是末莫</p>
+    </div>
+    <div class="detail-btns">
+      <button id="announcement-close" class="btn">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 房间大厅 ================= -->
+<div id="screen-room" class="screen hidden">
+  <div class="room-box">
+    <div class="room-head">
+      <span class="room-label">房间号</span>
+      <b id="room-code">----</b>
+      <button id="btn-copy" class="btn btn-mini">复制</button>
+    </div>
+    <div class="room-hint">把房间号发给朋友，手机/电脑在「加入房间」里输入即可</div>
+    <div id="room-players" class="room-players"></div>
+    <div id="room-char-config" class="hidden" style="margin-top: 16px; padding: 12px; background: var(--bg2); border-radius: 8px;">
+      <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">测试模式角色配置：</div>
+      <div id="char-config-list" style="display: flex; gap: 12px; flex-wrap: wrap;"></div>
+    </div>
+    <div class="room-actions">
+      <button id="btn-add-ai" class="btn">补位AI（单人测试）</button>
+      <button id="btn-start" class="btn btn-primary">开始游戏</button>
+      <button id="btn-leave" class="btn btn-ghost">离开房间</button>
+    </div>
+    <div class="room-status" id="room-status"></div>
+  </div>
+</div>
+
+<!-- ================= 对局 ================= -->
+<div id="screen-game" class="screen hidden">
+  <div id="topbar">
+    <div class="tb-left">
+      <span class="tb-code-label">房号</span><b id="tb-code">----</b>
+      <button id="btn-copy2" class="btn btn-mini">复制</button>
+    </div>
+    <div class="tb-center">
+      <span id="tb-turn">—</span>
+      <span id="tb-phase">等待中</span>
+      <span id="tb-deck">牌堆 0</span>
+    </div>
+    <div class="tb-right">
+      <button id="btn-log" class="btn btn-mini">日志</button>
+      <button id="btn-fullscreen-game" class="btn btn-mini">全屏</button>
+      <button id="btn-settings" class="btn btn-mini">设置</button>
+      <button id="btn-quit" class="btn btn-mini">退出</button>
+    </div>
+  </div>
+
+  <div id="others-row"></div>
+
+  <div id="center">
+    <div id="phase-banner"></div>
+    <div id="play-feed"></div>
+    <div id="center-hint"></div>
+  </div>
+
+  <div id="me-area">
+    <div id="me-card"></div>
+    <div id="hand-zone">
+      <div id="hand"></div>
+      <div id="action-bar">
+        <span id="action-hint"></span>
+        <div id="skill-bar" class="hidden"></div>
+        <button id="btn-use" class="btn hidden">使用</button>
+        <button id="btn-discard1" class="btn hidden">弃置</button>
+        <button id="btn-cancel" class="btn hidden">取消</button>
+        <button id="btn-target-confirm" class="btn btn-primary hidden">确认目标</button>
+        <button id="btn-self-use" class="btn hidden">对自己使用</button>
+        <button id="btn-cheat" class="btn" style="background: #ff6b6b;">作弊</button>
+        <button id="btn-end-turn" class="btn btn-primary">结束回合</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 响应 / 弃牌 弹层 -->
+  <div id="overlay" class="hidden">
+    <div id="overlay-box">
+      <div id="overlay-title"></div>
+      <div id="overlay-desc"></div>
+      <div id="overlay-cards"></div>
+      <div class="overlay-btns">
+        <button id="btn-ov-ok" class="btn btn-primary">确认</button>
+        <button id="btn-ov-cancel" class="btn">放弃</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 详情查看弹层（点手牌/角色卡） -->
+  <div id="detail-modal" class="hidden">
+    <div id="detail-box">
+      <div id="detail-title-row">
+        <span id="detail-title"></span>
+        <span id="detail-sub"></span>
+      </div>
+      <div id="detail-tabs" style="display: flex; gap: 8px; margin-bottom: 12px; justify-content: center;">
+        <button id="tab-skills" class="btn btn-mini btn-primary">技能</button>
+        <button id="tab-equip" class="btn btn-mini">装备</button>
+        <button id="tab-effects" class="btn btn-mini">效果</button>
+      </div>
+      <div id="detail-body"></div>
+      <div class="detail-btns">
+        <button id="dm-use" class="btn btn-primary hidden">使用</button>
+        <button id="dm-discard" class="btn hidden">弃置</button>
+        <button id="dm-close" class="btn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 作弊面板（测试模式） -->
+  <div id="cheat-modal" class="hidden">
+    <div id="cheat-box">
+      <div class="cheat-title">作弊面板（测试模式）</div>
+      <div class="cheat-row">
+        <label>目标玩家：</label>
+        <select id="cheat-target"></select>
+      </div>
+      <div class="cheat-row">
+        <label>加血：</label>
+        <button class="btn btn-mini" onclick="doCheat('add_hp', 1)">+1</button>
+        <button class="btn btn-mini" onclick="doCheat('add_hp', 2)">+2</button>
+        <button class="btn btn-mini" onclick="doCheat('add_hp', 3)">+3</button>
+      </div>
+      <div class="cheat-row">
+        <label>扣血：</label>
+        <button class="btn btn-mini" onclick="doCheat('sub_hp', 1)">-1</button>
+        <button class="btn btn-mini" onclick="doCheat('sub_hp', 2)">-2</button>
+        <button class="btn btn-mini" onclick="doCheat('sub_hp', 3)">-3</button>
+      </div>
+      <div class="cheat-row">
+        <label>加牌：</label>
+        <select id="cheat-card-kind">
+          <optgroup label="基础牌">
+            <option value="slash">普通攻击</option>
+            <option value="jink">闪避</option>
+            <option value="peach">甜甜花酿鸡</option>
+            <option value="food_egg">提瓦特煎蛋</option>
+            <option value="wine">仙跳墙</option>
+            <option value="elemental">元素攻击</option>
+          </optgroup>
+          <optgroup label="锦囊牌">
+            <option value="wuzhong">浓缩树脂</option>
+            <option value="dismantle">史莱姆炸药桶</option>
+            <option value="snatch">拾取</option>
+            <option value="nanman">深渊入侵</option>
+            <option value="arrows">搜查令</option>
+            <option value="garden">七天神像</option>
+            <option value="duel">御前决斗</option>
+            <option value="wuxie">庇护</option>
+            <option value="dimai">地脉之花</option>
+            <option value="yanshou">眼狩令</option>
+            <option value="liangren">两人三足</option>
+          </optgroup>
+          <optgroup label="延时锦囊">
+            <option value="guanbijing">关禁闭</option>
+            <option value="leidian">落雷</option>
+          </optgroup>
+          <optgroup label="装备牌">
+            <option value="crossbow">莎塔娜娅的苍银</option>
+            <option value="bagua">捕风瓶</option>
+            <option value="ruin_guard">独眼小宝</option>
+            <option value="wind_seed">风种子</option>
+            <option value="wind_field">风场</option>
+          </optgroup>
+        </select>
+        <button class="btn btn-mini" onclick="doCheatCard()">加牌</button>
+      </div>
+      <div class="cheat-row" style="justify-content: center; margin-top: 12px;">
+        <button id="btn-cheat-close" class="btn">关闭</button>
+      </div>
+    </div>
+  </div>
+  </div><!-- /screen-game -->
+
+  <!-- 选角色弹层（开局） -->
+  <div id="char-select-modal" class="hidden">
+    <div id="char-select-box">
+      <div class="char-select-title">选择你的角色</div>
+      <div id="char-select-options" style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 16px;"></div>
+    </div>
+  </div>
+
+  <!-- 日志面板 -->
+  <div id="log-panel" class="hidden">
+    <div class="log-head">对局日志 <button id="btn-log-close" class="btn btn-mini">关闭</button></div>
+    <div id="log-list"></div>
+  </div>
+
+  <!-- 胜负结算 -->
+  <div id="gameover" class="hidden">
+    <div id="gameover-box">
+      <h2 id="go-title"></h2>
+      <div id="go-detail"></div>
+      <div id="go-list"></div>
+      <div class="go-btns">
+        <button id="btn-restart" class="btn btn-primary hidden">再来一局</button>
+        <button id="btn-go-close" class="btn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置弹窗 -->
+  <div id="settings-modal" class="hidden">
+    <div id="settings-box">
+      <div id="settings-title-row">
+        <span id="settings-title">设置</span>
+      </div>
+      <div id="settings-body">
+        <div class="setting-item">
+          <label>音量</label>
+          <input type="range" id="setting-volume" min="0" max="100" value="50">
+          <span id="setting-volume-value">50%</span>
+        </div>
+        <div class="setting-item">
+          <label>UI 比例</label>
+          <input type="range" id="setting-ui-scale" min="80" max="150" value="120">
+          <span id="setting-ui-scale-value">120%</span>
+        </div>
+      </div>
+      <div class="detail-btns">
+        <button id="settings-close" class="btn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图鉴弹窗 -->
+  <div id="codex-modal" class="hidden">
+    <div id="codex-box">
+      <div id="codex-title-row">
+        <span id="codex-title">图鉴</span>
+      </div>
+      <div id="codex-tabs" style="display: flex; gap: 8px; margin-bottom: 12px; justify-content: center;">
+        <button id="codex-tab-char" class="btn btn-mini btn-primary">角色</button>
+        <button id="codex-tab-card" class="btn btn-mini">手牌</button>
+        <button id="codex-tab-identity" class="btn btn-mini">身份</button>
+      </div>
+      <div id="codex-body" style="max-height: 60vh; overflow-y: auto;"></div>
+      <div class="detail-btns">
+        <button id="codex-close" class="btn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图鉴详情弹窗 -->
+  <div id="codex-detail-modal" class="hidden">
+    <div id="codex-detail-box">
+      <div id="codex-detail-title-row">
+        <span id="codex-detail-title"></span>
+      </div>
+      <div id="codex-detail-body"></div>
+      <div class="detail-btns">
+        <button id="codex-detail-close" class="btn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
