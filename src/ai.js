@@ -107,12 +107,18 @@ function aiPlayTurn(p, game) {
   const dt = p.hand.find((c) => c.kind === 'dismantle');
   if (dt) {
     const t = pickOtherWithCards(p, game, false);
-    if (t) acts.push(() => game.playCard(p, dt.id, [t.id]));
+    if (t) {
+      // 史莱姆炸药桶：只指定目标，选牌由ask自动处理
+      acts.push(() => game.playCard(p, dt.id, [t.id]));
+    }
   }
   const sn = p.hand.find((c) => c.kind === 'snatch');
   if (sn) {
     const t = pickOtherWithCards(p, game, true);
-    if (t) acts.push(() => game.playCard(p, sn.id, [t.id]));
+    if (t) {
+      // 拾取：只指定目标，选牌由ask自动处理
+      acts.push(() => game.playCard(p, sn.id, [t.id]));
+    }
   }
   const du = p.hand.find((c) => c.kind === 'duel');
   if (du) {

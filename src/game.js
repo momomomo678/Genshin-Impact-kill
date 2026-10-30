@@ -76,11 +76,51 @@ class Game {
     this.ask = { playerId: askDef.playerId, type: askDef.type, data: askDef.data, resolve: askDef.resolve };
     this.waiting = true;
     this.emit('ask', askDef.playerId, { type: askDef.type, data: askDef.data });
+    
+    // AI玩家自动响应，不会卡住
+    const player = this.players.find(p => p.id === askDef.playerId);
+    if (player && player.isBot) {
+      setTimeout(() => {
+        const aiResponse = this.aiAutoRespond(askDef.type, askDef.data, player);
+        this.resolveAsk(askDef.playerId, aiResponse);
+      }, 300 + Math.random() * 500); // 模拟思考延迟
+      return;
+    }
+    
     const timeout = askDef.timeout != null ? askDef.timeout : CONFIG.JUDGE_DURATION;
     const cur = this.ask;
     cur._t = setTimeout(() => {
       if (this.ask === cur) this.resolveAsk(cur.playerId, null);
     }, timeout);
+  }
+
+  // AI自动响应各种ask请求
+  aiAutoRespond(type, data, player) {
+    switch (type) {
+      case 'confirm_venti':
+        // 温迪【弦发的苍风】：AI选择不触发，正常攻击一名敌人
+        return false;
+      case 'choose_target':
+        // 选择目标：随机选一个存活的其他玩家
+        const targets = this.players.filter(p => p.alive && p.id !== player.id);
+        if (targets.length > 0) {
+          const randomTarget = targets[Math.floor(Math.random() * targets.length)];
+          return randomTarget.id;
+        }
+        return null;
+      case 'select_card':
+        // 选择牌：从选项里随机选一个（拾取/炸药桶选目标的牌）
+        if (data && data.options && data.options.length > 0) {
+          return data.options[Math.floor(Math.random() * data.options.length)];
+        }
+        return null;
+      case 'confirm_ganyu':
+        // 甘雨【流天射术】：AI选择触发
+        return true;
+      default:
+        // 其他确认类型：默认选否/放弃
+        return null;
+    }
   }
   resolveAsk(responderId, payload) {
     if (!this.ask || this.ask.playerId !== responderId) return false;
